@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Riesgo operacional: componentes teóricos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E9EFF3;
+  --surface: #FFFFFF;
+  --ink: #14213D;
+  --muted: #4A5873;
+  --line: #C5D0DC;
+  --teal: #0B7F83;
+  --amber: #C77C00;
+  --coral: #C9402B;
+  --chip: #DCE6EE;
+  --accent-bg: #F0F4F8;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1828;
+    --surface: #15243A;
+    --ink: #E8EEF5;
+    --muted: #A5B3C6;
+    --line: #2B3D58;
+    --teal: #4FD1C5;
+    --amber: #F6B73C;
+    --coral: #FF8A70;
+    --chip: #1D3050;
+    --accent-bg: #1A2B44;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0D1828;
+  --surface: #15243A;
+  --ink: #E8EEF5;
+  --muted: #A5B3C6;
+  --line: #2B3D58;
+  --teal: #4FD1C5;
+  --amber: #F6B73C;
+  --coral: #FF8A70;
+  --chip: #1D3050;
+  --accent-bg: #1A2B44;
+}
+
+:root[data-theme="light"] {
+  --bg: #E9EFF3;
+  --surface: #FFFFFF;
+  --ink: #14213D;
+  --muted: #4A5873;
+  --line: #C5D0DC;
+  --teal: #0B7F83;
+  --amber: #C77C00;
+  --coral: #C9402B;
+  --chip: #DCE6EE;
+  --accent-bg: #F0F4F8;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.5 "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+}
+
+/* Navigation Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  padding: 6px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+nav {
+  display: flex;
+  gap: 6px;
+  padding: 6px 0;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: thin;
+}
+
+nav button {
+  font: 500 14px "IBM Plex Sans", sans-serif;
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+nav button:hover {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+nav button[aria-current="true"] {
+  color: var(--ink);
+  background: var(--chip);
+  border-color: var(--line);
+  font-weight: 600;
+}
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: 500 13px "IBM Plex Sans", sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--chip);
+}
+
+button:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+section {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 28px 20px 90px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(24px);
+  transition: opacity .35s ease, transform .35s ease, visibility .35s;
+}
+
+section.on {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: clamp(26px, 4.5vw, 44px);
+  font-weight: 800;
+  max-width: 24ch;
+  color: var(--ink);
+}
+
+.lead {
+  color: var(--muted);
+  max-width: 68ch;
+  margin: 12px 0 24px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.badge-comparison {
+  display: inline-flex;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge strong {
+  color: var(--teal);
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+p {
+  margin: 0;
+}
+
+.small {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Chain visualization */
+.chain {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  margin-bottom: 30px;
+}
+
+.link {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease;
+}
+
+.link:hover {
+  transform: translateY(-2px);
+}
+
+.link b {
+  font: 800 clamp(30px, 5vw, 48px)/1 "Bricolage Grotesque", sans-serif;
+  display: block;
+  letter-spacing: -.03em;
+  margin-bottom: 8px;
+}
+
+.link.c b { color: var(--teal); }
+.link.e b { color: var(--amber); }
+.link.p b { color: var(--coral); }
+
+.link .example {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.link .example strong {
+  color: var(--ink);
+}
+
+.arr {
+  text-align: center;
+  font: 800 28px/1 "Bricolage Grotesque", sans-serif;
+  color: var(--muted);
+  transform: rotate(90deg);
+  height: 24px;
+}
+
+/* Grids & Cards */
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.card.rh { border-top: 4px solid var(--teal); }
+.card.ou { border-top: 4px solid var(--amber); }
+.card.pr { border-top: 4px solid var(--coral); }
+.card.si { border-top: 4px solid var(--ink); }
+.card.ex { border-top: 4px solid var(--muted); }
+
+.card-tag {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+
+.card .ex-box {
+  margin-top: 12px;
+  background: var(--accent-bg);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+/* Process Staircase */
+.stairs {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.step {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.step:nth-child(2) { margin-left: clamp(12px, 4vw, 48px); }
+.step:nth-child(3) { margin-left: clamp(24px, 8vw, 96px); }
+
+.ej-tag {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  background: var(--chip);
+  color: var(--ink);
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.kci-badge {
+  display: inline-block;
+  margin-top: 8px;
+  margin-left: 6px;
+  font-size: 12.5px;
+  background: rgba(11, 127, 131, 0.12);
+  color: var(--teal);
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+/* Spectrum */
+.spectrum-container {
+  margin: 10px 0 24px;
+}
+
+.spectrum {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, var(--teal), var(--amber), var(--coral));
+  margin: 6px 0 10px;
+}
+
+.sp-lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Roof Block for Management */
+.roof {
+  background: var(--ink);
+  color: #FFFFFF;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.roof h3 {
+  color: #FFFFFF;
+  font-size: 22px;
+}
+
+.roof p {
+  opacity: .9;
+  max-width: 66ch;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.lines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.line-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.line-box strong {
+  display: block;
+  color: var(--teal);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+/* Control Types Comparison */
+.control-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.ctrl-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.ctrl-card.prev { border-left: 5px solid var(--teal); }
+.ctrl-card.det { border-left: 5px solid var(--amber); }
+
+/* Continuity Cards */
+.two {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-bottom: 24px;
+}
+
+.big {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.big .tag {
+  font: 800 36px/1 "Bricolage Grotesque", sans-serif;
+  color: var(--teal);
+  margin-bottom: 8px;
+}
+
+.big.r .tag {
+  color: var(--amber);
+}
+
+.metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-bg);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  margin-top: 10px;
+  color: var(--ink);
+}
+
+.metric-pill strong {
+  color: var(--teal);
+}
+
+/* Bottom Controls */
+.ctrl {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg) 65%, rgba(233, 239, 243, 0));
+  pointer-events: none;
+  z-index: 10;
+}
+
+:root[data-theme="dark"] .ctrl {
+  background: linear-gradient(to top, var(--bg) 65%, rgba(13, 24, 40, 0));
+}
+
+.ctrl button {
+  pointer-events: auto;
+  font: 500 15px "IBM Plex Sans", sans-serif;
+  background: var(--ink);
+  color: var(--bg);
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.ctrl button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ctrl button:disabled {
+  opacity: .3;
+  cursor: default;
+  box-shadow: none;
+}
+
+.ctrl span {
+  pointer-events: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+@media (min-width: 760px) {
+  section {
+    padding: 40px 40px 100px;
+  }
+  .chain {
+    grid-template-columns: 1fr 32px 1fr 32px 1fr;
+    align-items: stretch;
+  }
+  .arr {
+    transform: none;
+    height: auto;
+    align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  section {
+    transition: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <nav id="tabs" aria-label="Lienzos"></nav>
+  <button class="theme-toggle" id="themeBtn" aria-label="Cambiar tema">
+    <span id="themeIcon">🌓</span> <span id="themeText">Modo</span>
+  </button>
+</header>
+
+<main>
+
+<!-- SECCIÓN 1: RIESGO INHERENTE -->
+<section id="riesgo" aria-label="Riesgo inherente">
+  <div class="wrap">
+    <h2>Todo riesgo operacional recorre tres pasos</h2>
+    <p class="lead">El riesgo operacional se origina en fallas internas o eventos externos. Para entenderlo, es fundamental diferenciar entre el estado natural del riesgo y su estado controlado:</p>
+    
+    <div class="badge-comparison">
+      <div class="badge"><strong>Riesgo Inherente:</strong> Nivel de exposición propio de la actividad antes de aplicar controles.</div>
+      <div class="badge"><strong>Riesgo Residual:</strong> Exposición remanente una vez aplicados los controles operacionalizados.</div>
+    </div>
+
+    <div class="chain">
+      <div class="link c">
+        <b>Causa</b>
+        <p class="small">La vulnerabilidad o falla inicial en personas, procesos, sistemas o eventos externos.</p>
+        <div class="example"><strong>Ejemplo:</strong> Falta de validación cruzada en el formulario de transferencias.</div>
+      </div>
+      <div class="arr" aria-hidden="true">→</div>
+      <div class="link e">
+        <b>Evento</b>
+        <p class="small">La manifestación concreta del problema o incidente operacional.</p>
+        <div class="example"><strong>Ejemplo:</strong> Duplicación automática de una transferencia por $50,000 USD.</div>
+      </div>
+      <div class="arr" aria-hidden="true">→</div>
+      <div class="link p">
+        <b>Pérdida</b>
+        <p class="small">El impacto cuantificable directo o indirecto resultante del evento.</p>
+        <div class="example"><strong>Ejemplo:</strong> Pérdida financiera, sanción regulatoria y reclamo de clientes.</div>
+      </div>
+    </div>
+
+    <h3>Las 5 fuentes de causa</h3>
+    <div class="grid">
+      <div class="card rh">
+        <h3>Recursos humanos</h3>
+        <p class="small">Errores por fatiga, falta de inducción/capacitación, alta rotación, exceso de confianza o fraude interno.</p>
+        <div class="ex-box">💡 <em>Ej: Digitar un cero adicional al ingresar un pago masivo.</em></div>
+      </div>
+      <div class="card ou">
+        <h3>Outsourcing y Terceros</h3>
+        <p class="small">Fallas en proveedores críticos, contratos débiles o pérdida de confidencialidad en servicios delegados.</p>
+        <div class="ex-box">💡 <em>Ej: Caída de la plataforma de pago del proveedor externo.</em></div>
+      </div>
+      <div class="card pr">
+        <h3>Procesos internos</h3>
+        <p class="small">Flujos ambiguos, falta de manuales, controles mal diseñados o responsabilidades difusas.</p>
+        <div class="ex-box">💡 <em>Ej: Aprobar créditos sin verificar historial de endeudamiento.</em></div>
+      </div>
+      <div class="card si">
+        <h3>Sistemas y TI</h3>
+        <p class="small">Fallas de código, indisponibilidad de servidores, ciberataques, obsolescencia o errores de parametrización.</p>
+        <div class="ex-box">💡 <em>Ej: Interrupción de la Banca en Línea tras actualizar software.</em></div>
+      </div>
+      <div class="card ex">
+        <h3>Eventos externos</h3>
+        <p class="small">Fraudes por terceros, phishing, falsificación de documentos, desastres naturales o cambios normativos.</p>
+        <div class="ex-box">💡 <em>Ej: Suplantación de identidad para retirar fondos de una cuenta.</em></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 2: PROCESOS -->
+<section id="procesos" aria-label="Procesos">
+  <div class="wrap">
+    <h2>Los procesos se descomponen y se clasifican</h2>
+    <p class="lead">Para mitigar eficazmente el riesgo, las organizaciones desglosan su operación de lo general a lo específico, identificando <strong>puntos de control críticos (KCI)</strong>.</p>
+    
+    <div class="stairs">
+      <div class="step">
+        <h3>1. Macroproceso</h3>
+        <p class="small">Gran arquitectura funcional que cumple un objetivo estrátegico global del negocio.</p>
+        <span class="ej-tag">Ejemplo: Gestión de Créditos</span>
+      </div>
+      <div class="step">
+        <h3>2. Proceso</h3>
+        <p class="small">Secuencia lógica interconectada de actividades dentro del macroproceso.</p>
+        <span class="ej-tag">Ejemplo: Originación y Evaluación de Crédito</span>
+      </div>
+      <div class="step">
+        <h3>3. Microproceso</h3>
+        <p class="small">Tarea puntual ejecutable donde se ubica la vulnerabilidad específica y se coloca el control.</p>
+        <span class="ej-tag">Ejemplo: Verificación documental de ingresos</span>
+        <span class="kci-badge">🎯 Punto Crítico / KCI</span>
+      </div>
+    </div>
+
+    <h3>Clasificación por grado de automatización</h3>
+    <div class="spectrum-container">
+      <div class="spectrum" role="img" aria-label="Espectro: De automatizado a manual"></div>
+      <div class="sp-lbl">
+        <span>Menor intervención humana (Mayor velocidad)</span>
+        <span>Mayor intervención humana (Mayor riesgo de error)</span>
+      </div>
+    </div>
+    
+    <div class="grid">
+      <div class="card rh">
+        <div class="card-tag">Totalmente Digital</div>
+        <h3>Automáticos</h3>
+        <p class="small">Ejecutados 100% por algoritmos o sistemas. El riesgo reside en la lógica de programación o fallas de infraestructura TI.</p>
+        <div class="ex-box">🛡️ <strong>Control recomendado:</strong> Controles preventivos automáticos (validación de reglas en base de datos).</div>
+      </div>
+      <div class="card ou">
+        <div class="card-tag">Híbrido</div>
+        <h3>Semiautomáticos</h3>
+        <p class="small">El sistema procesa la información pero requiere confirmación o ingreso de datos por parte de un operador.</p>
+        <div class="ex-box">🛡️ <strong>Control recomendado:</strong> Validaciones cruzadas y reportes de excepción parametrizados.</div>
+      </div>
+      <div class="card pr">
+        <div class="card-tag">Humano</div>
+        <h3>Manuales</h3>
+        <p class="small">Realizados íntegramente por personas (físico o digital sin validaciones). Alta susceptibilidad al sesgo y al cansancio.</p>
+        <div class="ex-box">🛡️ <strong>Control recomendado:</strong> Doble revisión ("cuatro ojos") y supervisión directa.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 3: GESTIÓN -->
+<section id="gestion" aria-label="Gestión">
+  <div class="wrap">
+    <h2>Gestionar el riesgo es controlar cómo se trabaja</h2>
+    <p class="lead">La gestión de riesgo operacional busca reducir el riesgo inherente hasta conducirlo a un nivel residual dentro del <strong>Apetito de Riesgo</strong> institucional.</p>
+    
+    <div class="roof">
+      <h3>Políticas y Marco de Gobernanza</h3>
+      <p>Marco normativo aprobado por el Consejo o Junta Directiva que define los límites de tolerancia operacional, las responsabilidades y la adopción del <strong>Modelo de las Tres Líneas de Defensa</strong>:</p>
+      <div class="lines-grid">
+        <div class="line-box"><strong>1ª Línea: Operaciones</strong>Dueños de los procesos que ejecutan los controles diarios.</div>
+        <div class="line-box"><strong>2ª Línea: Riesgos & Cumplimiento</strong>Monitorea, define metodologías y supervisa los controles.</div>
+        <div class="line-box"><strong>3ª Línea: Auditoría Interna</strong>Proporciona aseguramiento independiente y objetivo.</div>
+      </div>
+    </div>
+
+    <h3>Pilares del diseño de controles</h3>
+    <div class="grid">
+      <div class="card rh">
+        <h3>Dualidad ("Cuatro ojos")</h3>
+        <p class="small">Operaciones críticas exigen la intervención obligatoria de dos personas: una ejecuta la transacción y otra verifica o autoriza.</p>
+      </div>
+      <div class="card ou">
+        <h3>Segregación de Funciones (SoD)</h3>
+        <p class="small">División de responsabilidades para evitar que una misma persona inicie, apruebe, registre y concilie una operación sensible.</p>
+      </div>
+      <div class="card pr">
+        <h3>Documentación y Trazabilidad</h3>
+        <p class="small">Toda operación debe dejar evidencia auditable (logs, firmas, actas) que garantice la rendición de cuentas post-evento.</p>
+      </div>
+      <div class="card si">
+        <h3>Procedimientos estandarizados</h3>
+        <p class="small">Manuales de operación actualizados que eliminan la ambigüedad definiendo con precisión quién, cuándo y cómo se ejecuta cada tarea.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 28px;">Clasificación temporal de los controles</h3>
+    <div class="control-types">
+      <div class="ctrl-card prev">
+        <h3>Preventivos</h3>
+        <p class="small">Diseñados para <strong>evitar que la causa desencadene el evento</strong>. Ocurren antes de la ejecución.</p>
+        <div class="ex-box">📌 <em>Ej: Bloqueo de contraseñas débiles, límites de monto preestablecidos.</em></div>
+      </div>
+      <div class="ctrl-card det">
+        <h3>Detectivos</h3>
+        <p class="small">Diseñados para <strong>descubrir e identificar el evento</strong> inmediatamente después de ocurrido para contener la pérdida.</p>
+        <div class="ex-box">📌 <em>Ej: Conciliaciones bancarias diarias, alertas por patrones inusuales.</em></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 4: CONTINUIDAD Y MEDICIÓN -->
+<section id="continuidad" aria-label="Continuidad y medición">
+  <div class="wrap">
+    <h2>Cuando el evento ocurre, hay que seguir y medir</h2>
+    <p class="lead">Los planes de resiliencia aseguran la supervivencia de la entidad ante eventos desastrosos, mientras que los indicadores transforman los errores en datos para decidir.</p>
+    
+    <div class="two">
+      <div class="big">
+        <div class="tag">BCP</div>
+        <h3>Plan de Continuidad del Negocio</h3>
+        <p class="small">Estrategia operativa para mantener en marcha los servicios críticos durante una crisis interrumptiva.</p>
+        <div class="metric-pill">📊 Fundamento: <strong>BIA (Business Impact Analysis)</strong> - Identifica procesos críticos y tiempos máximos de caída.</div>
+      </div>
+      <div class="big r">
+        <div class="tag">BRP</div>
+        <h3>Plan de Recuperación del Negocio</h3>
+        <p class="small">Procedimientos técnicos y logísticos para restablecer la operación normal tras un evento severo.</p>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
+          <div class="metric-pill">⏱️ <strong>RTO (Recovery Time Objective):</strong> Tiempo máximo tolerable de interrupción.</div>
+          <div class="metric-pill">💾 <strong>RPO (Recovery Point Objective):</strong> Pérdida máxima de datos tolerable medida en tiempo.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Herramientas de Medición y Seguimiento</h3>
+    <div class="grid">
+      <div class="card rh">
+        <h3>Bases de Datos de Eventos</h3>
+        <p class="small">Registro sistemático e histórico de pérdidas. Documenta causa raíz, tipo de evento, fecha, monto de pérdida bruta, recuperaciones y proceso afectado.</p>
+      </div>
+      <div class="card ou">
+        <h3>Planes de Acción / Eventos</h3>
+        <p class="small">Hoja de ruta correctiva asignada formalmente a un responsable con fecha límite estricta para eliminar la causa raíz y evitar la reincidencia.</p>
+      </div>
+      <div class="card pr">
+        <h3>KRI (Key Risk Indicators)</h3>
+        <p class="small">Indicadores clave de riesgo que actúan como señales de alerta temprana (Early Warning) mediante semáforos de tolerancia que escalan a la alta dirección.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="ctrl">
+  <button id="prev">Anterior</button>
+  <span id="count">1 de 4</span>
+  <button id="next">Siguiente</button>
+</div>
+
+<script>
+(function(){
+  var ids = ["riesgo", "procesos", "gestion", "continuidad"];
+  var names = ["1. Riesgo inherente", "2. Procesos", "3. Gestión", "4. Continuidad y medición"];
+  var secs = ids.map(function(i){ return document.getElementById(i); });
+  var tabs = document.getElementById("tabs");
+  var cur = 0;
+
+  // Dynamically create tabs
+  names.forEach(function(n, i){
+    var b = document.createElement("button");
+    b.textContent = n;
+    b.onclick = function(){ go(i); };
+    tabs.appendChild(b);
+  });
+
+  function go(i){
+    cur = Math.max(0, Math.min(ids.length - 1, i));
+    secs.forEach(function(s, k){
+      s.classList.toggle("on", k === cur);
+      if (k === cur) s.scrollTop = 0;
+    });
+    
+    Array.prototype.forEach.call(tabs.children, function(b, k){
+      b.setAttribute("aria-current", k === cur ? "true" : "false");
+    });
+
+    document.getElementById("prev").disabled = (cur === 0);
+    document.getElementById("next").disabled = (cur === ids.length - 1);
+    document.getElementById("count").textContent = (cur + 1) + " de " + ids.length;
+
+    try {
+      history.replaceState(null, "", "#" + ids[cur]);
+    } catch(e) {}
+  }
+
+  document.getElementById("prev").onclick = function(){ go(cur - 1); };
+  document.getElementById("next").onclick = function(){ go(cur + 1); };
+
+  // Keyboard Navigation
+  document.addEventListener("keydown", function(e){
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === "ArrowRight") go(cur + 1);
+    if (e.key === "ArrowLeft") go(cur - 1);
+  });
+
+  // URL Hash Navigation
+  window.addEventListener("hashchange", function(){
+    var k = ids.indexOf(location.hash.slice(1));
+    if (k > -1) go(k);
+  });
+
+  // Dark/Light Theme Switcher
+  var themeBtn = document.getElementById("themeBtn");
+  var root = document.documentElement;
+  
+  themeBtn.addEventListener("click", function(){
+    var currentTheme = root.getAttribute("data-theme");
+    var nextTheme = "light";
+    if (!currentTheme) {
+      var isDarkDefault = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      nextTheme = isDarkDefault ? "light" : "dark";
+    } else {
+      nextTheme = currentTheme === "dark" ? "light" : "dark";
+    }
+    root.setAttribute("data-theme", nextTheme);
+  });
+
+  // Init view
+  var s = ids.indexOf(location.hash.slice(1));
+  go(s > -1 ? s : 0);
+})();
+</script>
+</body>
+</html>
